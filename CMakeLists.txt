@@ -1,7 +1,7 @@
-# Example Audio Plugin CMakeLists.txt
-
-# To get started on a new plugin, copy this entire folder (containing this file and C++ sources) to
-# a convenient location, and then start making modifications.
+# This is the CMakeLists.txt. If you add any libraries, make sure to include 
+# them here and what not. You shouldn't have to modify this too much except those
+# library adds. As is this whole projectk, this file is distributed under the 
+# GNU General Public License v3.0
 
 # The first line of any CMake project should be a call to `cmake_minimum_required`, which checks
 # that the installed CMake will be able to understand the following CMakeLists, and ensures that

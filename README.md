@@ -3,7 +3,7 @@ Liscence ramble.----------------------------------------------------------------
 
 I don't really care what you do with this code. For technicality purposes, it is
 released under the GNU General Public Liscence v3.0. So modify it and share it, 
-and learn from it to your heart's desire.
+and learn from it to your heart's desire. The liscense detail is in this repo 
 
 --------------------------------------------------------------------------------
 
