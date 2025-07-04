@@ -12,14 +12,17 @@ learn the JUCE framework, c++, and building with cmake.
 
 Steps for Building.-------------------------------------------------------------
 
+Requierments:
+CMake
+Juce
+
 Once you have the repository downloaded, run the command,
 
-    cmake -Bbuild -DCMMAKE_PREFIX_PATH="PATH/TO/JUCE/INSTALL"
+    cmake -Bbuild -DCMMAKE_PREFIX_PATH=PATH/TO/JUCE/INSTALL
 
-Note that in order to build this using CMake, you must have build JUCE using 
-cmake and have the file path is to the install folder on your system. 
-OR alternatively, if you want JUCE to be a subdirectory, change the 
-CMakeLists.txt to add_subdirectory(JUCE).
+*Note that in order to build this using CMake, you must have built JUCE using 
+cmake and have the file path is to the install folder on your system. More can
+be found about CMake and JUCE here: https://ccrma.stanford.edu/~jos/juce_modules/md__Users_jos_w_JUCEModulesDoc_docs_CMake_API.html
 
 This should create a /build subdirectory, now to build the AU, VST3, and 
 standalone program, run the command,
