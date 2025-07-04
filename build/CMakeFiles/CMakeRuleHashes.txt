@@ -1,5 +1,0 @@
-# Hashes of file build rules.
-f23924dce64a2067848cac838a152ae0 DK_DISTORTION_artefacts/JuceLibraryCode/DK_DISTORTION_AU/PkgInfo
-2af9a9e15f7d0766c360ee38b56406e5 DK_DISTORTION_artefacts/JuceLibraryCode/DK_DISTORTION_Standalone/PkgInfo
-d3dffe2069b5609253421b78c1a38b02 DK_DISTORTION_artefacts/JuceLibraryCode/DK_DISTORTION_VST3/PkgInfo
-a8595a11f8376f6c99024465c9b28f39 DK_DISTORTION_artefacts/JuceLibraryCode/JuceHeader.h
