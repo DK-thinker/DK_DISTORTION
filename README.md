@@ -1,5 +1,5 @@
 
-Liscence ramble.----------------------------------------------------------------
+Liscence.----------------------------------------------------------------
 
 I don't really care what you do with this code. For technicality purposes, it is
 released under the GNU General Public Liscence v3.0. So modify it and share it, 
@@ -14,7 +14,7 @@ Steps for Building.-------------------------------------------------------------
 
 Requierments:
 CMake
-Juce
+JUCE
 
 Once you have the repository downloaded, run the command,
 
@@ -35,6 +35,9 @@ If you want to run the standalone version, follow these steps:
 
     cd build/DK_DISTORTION_artefacts/Standalone
     open DK_DISTORTION.app
+
+If you wish to modify the cmake process, edit the CMakeLists.txt as desired. 
+Plenty of information can be found on the link above, and any cmake documentation
 
 --------------------------------------------------------------------------------
 

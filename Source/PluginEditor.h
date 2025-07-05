@@ -17,7 +17,7 @@
 class NewProjectAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
-    NewProjectAudioProcessorEditor (NewProjectAudioProcessor&);
+    NewProjectAudioProcessorEditor (DK_DISTORTIONAudioProcessor&);
     ~NewProjectAudioProcessorEditor() override;
 
     //==============================================================================
@@ -27,7 +27,7 @@ public:
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
-    NewProjectAudioProcessor& audioProcessor;
+    DK_DISTORTIONAudioProcessor& audioProcessor;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NewProjectAudioProcessorEditor)
 };

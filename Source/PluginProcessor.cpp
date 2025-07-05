@@ -1,16 +1,54 @@
 /*
   ==============================================================================
 
-    This file contains the basic framework code for a JUCE plugin processor.
+   This file holds the main DSP of the plug in, including block processing.
+
+   Summary of DSP:
+   There is an amound paramater.
+   Amount - Gain applied to |sample| on the scale 0.0-1.0. 
+   any sample, that after the gain has been applied, which is over 1.0 will be 
+   folded under by the amount 1.0 - (sample - 1.0).
 
   ==============================================================================
 */
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include <stdlib.h>
+//=============================================================================
+// DSP Helpers
+
+static float getSign(float x){
+    if (x < 0.0) return -1.0;
+    if (0.0 <= x) return 1.0;
+}
+
+/* 
+ * The way folding works; 
+ * We want this sort of recursive folding for when we apply extreme gain,
+ * the way to do this is by working with the absolut value, following this 
+ * folding down if greater than 1 and folding up if less than 0 until the sample
+ * is 0 < x < 1. Then we add the sign back in and return. 
+ * @TODO add rectifier mode, a binaray paramater that toggles adding the sign
+ * back
+ * */
+static float foldSample(float x, float drive){
+    float sign = getSign(x);
+    x = std::abs(x);
+    x *= drive;
+    while (!(0.0f < x && x < 1.0f)){
+        if (x < 0.0f){
+            x = - x;
+        }
+        else if (1.0f < x){
+            x = 2.0f - x;
+        }
+    }
+    return sign * x;
+}
 
 //==============================================================================
-NewProjectAudioProcessor::NewProjectAudioProcessor()
+DK_DISTORTIONAudioProcessor::DK_DISTORTIONAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
@@ -22,19 +60,24 @@ NewProjectAudioProcessor::NewProjectAudioProcessor()
                        )
 #endif
 {
+    // amount is the gain we add, has to be between 0.0 and 1.0, with default
+    // value 0.5
+    addParameter(drive = new juce::AudioParameterFloat ("drive",
+        "Drive", 0.0, 5.0, 1.0 ));
+
 }
 
-NewProjectAudioProcessor::~NewProjectAudioProcessor()
+DK_DISTORTIONAudioProcessor::~DK_DISTORTIONAudioProcessor()
 {
 }
 
 //==============================================================================
-const juce::String NewProjectAudioProcessor::getName() const
+const juce::String DK_DISTORTIONAudioProcessor::getName() const
 {
-    return JucePlugin_Name;
+    return "DK_DISTORTION";
 }
 
-bool NewProjectAudioProcessor::acceptsMidi() const
+bool DK_DISTORTIONAudioProcessor::acceptsMidi() const
 {
    #if JucePlugin_WantsMidiInput
     return true;
@@ -43,7 +86,7 @@ bool NewProjectAudioProcessor::acceptsMidi() const
    #endif
 }
 
-bool NewProjectAudioProcessor::producesMidi() const
+bool DK_DISTORTIONAudioProcessor::producesMidi() const
 {
    #if JucePlugin_ProducesMidiOutput
     return true;
@@ -52,7 +95,7 @@ bool NewProjectAudioProcessor::producesMidi() const
    #endif
 }
 
-bool NewProjectAudioProcessor::isMidiEffect() const
+bool DK_DISTORTIONAudioProcessor::isMidiEffect() const
 {
    #if JucePlugin_IsMidiEffect
     return true;
@@ -61,50 +104,50 @@ bool NewProjectAudioProcessor::isMidiEffect() const
    #endif
 }
 
-double NewProjectAudioProcessor::getTailLengthSeconds() const
+double DK_DISTORTIONAudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int NewProjectAudioProcessor::getNumPrograms()
+int DK_DISTORTIONAudioProcessor::getNumPrograms()
 {
     return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
                 // so this should be at least 1, even if you're not really implementing programs.
 }
 
-int NewProjectAudioProcessor::getCurrentProgram()
+int DK_DISTORTIONAudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void NewProjectAudioProcessor::setCurrentProgram (int index)
+void DK_DISTORTIONAudioProcessor::setCurrentProgram (int index)
 {
 }
 
-const juce::String NewProjectAudioProcessor::getProgramName (int index)
+const juce::String DK_DISTORTIONAudioProcessor::getProgramName (int index)
 {
     return {};
 }
 
-void NewProjectAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void DK_DISTORTIONAudioProcessor::changeProgramName (int index, const juce::String& newName)
 {
 }
 
 //==============================================================================
-void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void DK_DISTORTIONAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 }
 
-void NewProjectAudioProcessor::releaseResources()
+void DK_DISTORTIONAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool NewProjectAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool DK_DISTORTIONAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
   #if JucePlugin_IsMidiEffect
     juce::ignoreUnused (layouts);
@@ -129,11 +172,12 @@ bool NewProjectAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 }
 #endif
 
-void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void DK_DISTORTIONAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
+    float drive = 10.0;
 
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
@@ -153,31 +197,34 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
+        for (int sample = 0; sample < buffer.getNumSamples(); sample++){
+            channelData[sample] = foldSample(channelData[sample], drive);
+        }
 
         // ..do something to the data...
     }
 }
 
 //==============================================================================
-bool NewProjectAudioProcessor::hasEditor() const
+bool DK_DISTORTIONAudioProcessor::hasEditor() const
 {
     return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor* NewProjectAudioProcessor::createEditor()
+juce::AudioProcessorEditor* DK_DISTORTIONAudioProcessor::createEditor()
 {
     return new NewProjectAudioProcessorEditor (*this);
 }
 
 //==============================================================================
-void NewProjectAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void DK_DISTORTIONAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
 }
 
-void NewProjectAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void DK_DISTORTIONAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
@@ -187,5 +234,5 @@ void NewProjectAudioProcessor::setStateInformation (const void* data, int sizeIn
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new NewProjectAudioProcessor();
+    return new DK_DISTORTIONAudioProcessor();
 }
