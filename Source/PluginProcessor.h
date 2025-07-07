@@ -53,8 +53,13 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    //==========================================================================
+    // where the paramaters are stored and what not
+    juce::AudioProcessorValueTreeState parameters;
+    static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
 private:
     //==============================================================================
-    juce::AudioParameterFloat* drive;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DK_DISTORTIONAudioProcessor)
 };

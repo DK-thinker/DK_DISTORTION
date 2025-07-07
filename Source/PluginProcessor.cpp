@@ -3,21 +3,17 @@
 
    This file holds the main DSP of the plug in, including block processing.
 
-   Summary of DSP:
-   There is an amound paramater.
-   Amount - Gain applied to |sample| on the scale 0.0-1.0. 
-   any sample, that after the gain has been applied, which is over 1.0 will be 
-   folded under by the amount 1.0 - (sample - 1.0).
+   Summary of DSP and Parameters:
+   Drive - Amount of drive to apply to input signal
 
   ==============================================================================
 */
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include <stdlib.h>
+#include <memory>
 //=============================================================================
 // DSP Helpers
-
 static float getSign(float x){
     if (x < 0.0) return -1.0;
     if (0.0 <= x) return 1.0;
@@ -28,7 +24,7 @@ static float getSign(float x){
  * We want this sort of recursive folding for when we apply extreme gain,
  * the way to do this is by working with the absolut value, following this 
  * folding down if greater than 1 and folding up if less than 0 until the sample
- * is 0 < x < 1. Then we add the sign back in and return. 
+ * is 0 < x < 1. Then we add the sign back in and return.
  * @TODO add rectifier mode, a binaray paramater that toggles adding the sign
  * back
  * */
@@ -48,6 +44,8 @@ static float foldSample(float x, float drive){
 }
 
 //==============================================================================
+// for the parameters constructor, since ther is no undo functionality, the 2nd 
+// arg is a nullptr
 DK_DISTORTIONAudioProcessor::DK_DISTORTIONAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
      : AudioProcessor (BusesProperties()
@@ -57,13 +55,11 @@ DK_DISTORTIONAudioProcessor::DK_DISTORTIONAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),
+    parameters (*this, nullptr, "PARAMETERS", createParameterLayout())
 #endif
 {
-    // amount is the gain we add, has to be between 0.0 and 1.0, with default
-    // value 0.5
-    addParameter(drive = new juce::AudioParameterFloat ("drive",
-        "Drive", 0.0, 5.0, 1.0 ));
+    // Want to initilize the parameter pointers here
 
 }
 
@@ -136,12 +132,14 @@ void DK_DISTORTIONAudioProcessor::changeProgramName (int index, const juce::Stri
 //==============================================================================
 void DK_DISTORTIONAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    DBG("Prepare to Play");
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 }
 
 void DK_DISTORTIONAudioProcessor::releaseResources()
 {
+    DBG("Release Resources");
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 }
@@ -194,12 +192,17 @@ void DK_DISTORTIONAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
+    int i = 0;
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
         for (int sample = 0; sample < buffer.getNumSamples(); sample++){
             channelData[sample] = foldSample(channelData[sample], drive);
         }
+        if (i % 10000 == 0){
+            DBG("ProcessBlock");
+        }
+        i++;
 
         // ..do something to the data...
     }
@@ -228,6 +231,56 @@ void DK_DISTORTIONAudioProcessor::setStateInformation (const void* data, int siz
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+}
+
+/*
+ * @brief paramater constructor, follows the juce apvt format
+ * What each (plugin) parameter does 
+ * drive - The amount to multiply the normalised input by
+ * rect - if true, evey sample is an absolute value
+ * dryWet - standard dry wet, 0.0 is full dry 1.0 is full wet
+ * output - gain (in dB) with a meter in editor.
+ */
+juce::AudioProcessorValueTreeState::ParameterLayout 
+DK_DISTORTIONAudioProcessor::createParameterLayout(){
+
+    AudioProcessorValueTreeState::ParameterLayout layout;
+
+    layout.add(std::make_unique<AudioParameterFloat> 
+        (
+            "drive", 
+            "Drive Amount",
+            1.0f, //min value
+            10.0f, //max
+            1.5f //default
+        )
+    );
+    layout.add(std::make_unique<AudioParameterBool>
+        (
+            "rect",
+            "Rectify",
+            false //default
+        )
+    );
+    layout.add(std::make_unique<AudioParameterFloat>
+        (
+            "dryWet",
+            "Dry/Wet",
+            0.0f, //min
+            1.0f, //max
+            0.8f //default
+        )
+    );
+    layout.add(std::make_unique<AudioParameterFloat>
+        (
+            "output",
+            "Output Gain dB",
+            -60.0f, //min
+            6.0f, //max
+            0.0f //default
+        )
+    );
+    return layout;
 }
 
 //==============================================================================

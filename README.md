@@ -39,5 +39,11 @@ If you want to run the standalone version, follow these steps:
 If you wish to modify the cmake process, edit the CMakeLists.txt as desired. 
 Plenty of information can be found on the link above, and any cmake documentation
 
+Building for debug:
+
+    cmake -Bbuild -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug
+
+This lets you use lldb to debug.
+
 --------------------------------------------------------------------------------
 
